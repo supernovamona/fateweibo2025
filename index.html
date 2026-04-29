@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1920">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>文游</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -618,6 +618,80 @@ ruby rt {
 @keyframes pulse {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
+}
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  html, body {
+    width: 100vw;
+    height: 100svh;
+    overflow: hidden;
+  }
+  #screen-main, #screen-reader, #screen-cg {
+    width: 100vw;
+    height: 100svh;
+  }
+
+  /* main screen: stack vertically */
+  #screen-main { flex-direction: column; }
+  .main-left {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    padding: 24px 20px 16px;
+    flex-shrink: 0;
+    gap: 10px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .main-header-img {
+    max-height: 80px;
+    max-width: 80px;
+    animation: none;
+    opacity: 1;
+  }
+  .main-brand { font-size: 13px; }
+  .main-right {
+    flex: 1;
+    padding: 16px 20px;
+    gap: 12px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .chapter-list {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    animation: none;
+    opacity: 1;
+  }
+  .chapter-item .ch-title { white-space: normal; }
+  .main-right-label { animation: none; opacity: 1; }
+
+  /* topbar */
+  #topbar { height: 80px; padding: 0 16px; }
+  #topbar-left { gap: 2px; }
+  #topbar-chapter { font-size: 11px; letter-spacing: 0.1em; }
+  #section-indicator { height: 56px; }
+  .digit-wrap { font-size: 52px; height: 52px; }
+  #topbar-right { gap: 12px; }
+  .topbar-btn { font-size: 11px; padding: 4px 8px; }
+
+  /* content + container */
+  #content-area { top: 80px; bottom: 52px; }
+  #page-container { width: calc(100vw - 40px); padding: 16px 0; }
+  #page-container.showing-cg { width: 100vw; }
+  .page-cg-inline { margin: 0; }
+
+  /* bottombar */
+  #bottombar { height: 52px; gap: 16px; }
+  .nav-btn { font-size: 11px; padding: 6px 10px; }
+  #click-hint { bottom: 58px; right: 16px; }
+
+  /* text */
+  .page-text p { font-size: 15px; line-height: 1.9; }
+  .page-epigraph { margin: 0 20px; }
+  .sns-body, .sns-comment-text { font-size: 12px; }
 }
 
 /* click hint */
@@ -1515,9 +1589,13 @@ btnAuto.addEventListener('click', (e) => { e.stopPropagation(); toggleAuto(); })
 btnSkip.addEventListener('mousedown', (e) => { e.stopPropagation(); startSkip(); });
 document.addEventListener('mouseup', () => { if (skipInterval) stopSkip(); });
 
-// ── FIT TO WINDOW ──
+// ── FIT TO WINDOW (desktop only) ──
 (function () {
   function fit() {
+    if (window.innerWidth <= 768) {
+      document.body.style.zoom = '';
+      return;
+    }
     const s = Math.min(window.innerWidth / 1920, window.innerHeight / 960);
     document.body.style.zoom = s;
   }

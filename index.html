@@ -1232,8 +1232,10 @@ const CHAPTER0 = {
 let currentPage = 0;
 let autoPlay = false;
 let autoTimer = null;
-let cgPending = false; // page index to return to after CG
-const AUTO_DELAY = 4000;
+let cgPending = false;
+let autoSpeedIdx = 0;
+const AUTO_SPEEDS = [4000, 2000];
+const AUTO_LABELS = ['Auto 1×', 'Auto 2×'];
 
 let pages = [];
 let total = 0;
@@ -1424,11 +1426,13 @@ function goPrev() {
 
 function scheduleAuto() {
   clearTimeout(autoTimer);
-  autoTimer = setTimeout(goNext, AUTO_DELAY);
+  autoTimer = setTimeout(goNext, AUTO_SPEEDS[autoSpeedIdx]);
 }
 
 function toggleAuto() {
-  autoPlay = !autoPlay;
+  autoSpeedIdx = (autoSpeedIdx + 1) % (AUTO_SPEEDS.length + 1);
+  autoPlay = autoSpeedIdx < AUTO_SPEEDS.length;
+  btnAuto.textContent = autoPlay ? AUTO_LABELS[autoSpeedIdx] : 'Auto';
   btnAuto.classList.toggle('active', autoPlay);
   if (autoPlay) {
     scheduleAuto();

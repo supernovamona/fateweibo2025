@@ -99,29 +99,45 @@ html, body {
 .main-left {
   width: 760px;
   flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 60px;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
   border-right: 1px solid rgba(255,255,255,0.04);
 }
 .main-brand {
+  position: absolute;
+  bottom: 28px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 3;
   font-family: var(--font-ui);
   font-size: 11px;
   letter-spacing: 0.4em;
-  color: var(--text-dim);
+  color: rgba(255,255,255,0.55);
   text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.8);
 }
 .main-header-img {
-  max-height: 500px;
-  max-width: 620px;
-  width: auto;
-  height: auto;
-  object-fit: contain;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
   opacity: 0;
   animation: fadeIn 1.2s ease 0.3s forwards;
+}
+.main-header-hover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  z-index: 1;
 }
 .main-right {
   flex: 1;
@@ -630,31 +646,17 @@ ruby rt {
     height: 42vh;
     min-height: 180px;
     border-right: none;
-    padding: 0;
     flex-shrink: 0;
-    gap: 0;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    position: relative;
-    overflow: hidden;
   }
   .main-header-img {
-    width: 100%;
-    height: calc(42vh - 32px);
-    min-height: 148px;
-    max-width: 100%;
-    max-height: none;
-    object-fit: cover;
-    object-position: top center;
     animation: none !important;
     opacity: 1 !important;
-    display: block;
+    object-position: center center;
   }
+  .main-header-hover { display: none; }
   .main-brand {
-    font-size: 11px;
-    padding: 6px 0 8px;
-    flex-shrink: 0;
+    font-size: 10px;
+    bottom: 10px;
   }
   .main-right {
     flex: 1;
@@ -696,6 +698,43 @@ ruby rt {
   .sns-body, .sns-comment-text { font-size: 12px; }
 }
 
+/* ── CHAPTER SPLASH (mobile first page) ── */
+.page-chapter-splash {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.splash-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+.splash-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 32px 24px 24px;
+  background: linear-gradient(to top, rgba(8,8,15,0.92) 0%, rgba(8,8,15,0.4) 60%, transparent 100%);
+}
+.splash-num {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+}
+.splash-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
 </style>
 </head>
 <body>
@@ -703,9 +742,10 @@ ruby rt {
 <!-- MAIN SCREEN (title + chapter select) -->
 <div id="screen-main">
   <div class="main-left">
-    <div class="main-brand">fateweibo2025</div>
     <img class="main-header-img" src="chapter0/header.png" alt=""
          onerror="this.style.display='none'">
+    <img class="main-header-hover" id="main-cover-hover" src="" alt="">
+    <div class="main-brand">fateweibo2025</div>
   </div>
   <div class="main-right">
     <div class="main-right-label">目录 · Contents</div>
@@ -1326,6 +1366,16 @@ function renderPage(page) {
     return `<div class="page-cg-inline"><img class="cg-inline-img" src="${page.src}" alt=""></div>`;
   }
 
+  if (t === 'chapter_splash') {
+    return `<div class="page-chapter-splash">
+      <img class="splash-img" src="${page.src}" alt="">
+      <div class="splash-overlay">
+        <div class="splash-num">${page.num}</div>
+        <div class="splash-title">${page.title}</div>
+      </div>
+    </div>`;
+  }
+
   return '';
 }
 
@@ -1382,7 +1432,7 @@ function doShowPage(idx) {
   currentPage = idx;
   const page = pages[idx];
 
-  pageContainer.classList.toggle('showing-cg', page.type === 'cg');
+  pageContainer.classList.toggle('showing-cg', page.type === 'cg' || page.type === 'chapter_splash');
   pageContainer.innerHTML = renderPage(page);
   pageContainer.scrollTop = 0;
 
@@ -1449,18 +1499,24 @@ function toggleAuto() {
 
 // ── CHAPTER DATA ──
 const CHAPTERS = [
-  { id: 'chapter0', num: '序章', title: '逢坂莫奈将会拥有平静幸福的人生', data: CHAPTER0 },
-  { id: 'chapter1', num: 'Chapter 1', title: 'Everything went south', locked: true },
-  { id: 'chapter2', num: 'Chapter 2', title: 'Strange matter', locked: true },
-  { id: 'chapter3', num: 'Chapter 3', title: 'Pioneer of the Stars', locked: true },
-  { id: 'chapter4', num: 'Chapter 4', title: '此地静谧疯狂', locked: true },
-  { id: 'chapter5', num: 'Chapter 5', title: '前行吧，或许希望就在前方', locked: true },
-  { id: 'chapter6', num: 'Chapter 6', title: 'Unforgettable, That\'s What You Are', locked: true },
-  { id: 'chapter7', num: 'Chapter 7', title: '所谓人者，皆如微尘', locked: true },
-  { id: 'chapter8', num: 'Chapter 8', title: '所谓人者，皆为星辰', locked: true },
+  { id: 'chapter0', num: '序章', title: '逢坂莫奈将会拥有平静幸福的人生', data: CHAPTER0, coverImg: 'chapter0/header.png' },
+  { id: 'chapter1', num: 'Chapter 1', title: 'Everything went south', locked: true, coverImg: '第1章.png' },
+  { id: 'chapter2', num: 'Chapter 2', title: 'Strange matter', locked: true, coverImg: '第2章.png' },
+  { id: 'chapter3', num: 'Chapter 3', title: 'Pioneer of the Stars', locked: true, coverImg: '第3章.png' },
+  { id: 'chapter4', num: 'Chapter 4', title: '此地静谧疯狂', locked: true, coverImg: '第4章.png' },
+  { id: 'chapter5', num: 'Chapter 5', title: '前行吧，或许希望就在前方', locked: true, coverImg: '第5章.png' },
+  { id: 'chapter6', num: 'Chapter 6', title: 'Unforgettable, That\'s What You Are', locked: true, coverImg: '第6章.png' },
+  { id: 'chapter7', num: 'Chapter 7', title: '所谓人者，皆如微尘', locked: true, coverImg: '第7章.png' },
+  { id: 'chapter8', num: 'Chapter 8', title: '所谓人者，皆为星辰', locked: true, coverImg: '第8章.png' },
 ];
 
 const chapterList = document.getElementById('chapter-list');
+const mainCoverHover = document.getElementById('main-cover-hover');
+
+// Preload all cover images
+CHAPTERS.forEach(ch => {
+  if (ch.coverImg) { const img = new Image(); img.src = ch.coverImg; }
+});
 
 CHAPTERS.forEach((ch) => {
   const el = document.createElement('div');
@@ -1469,13 +1525,26 @@ CHAPTERS.forEach((ch) => {
   if (!ch.locked) {
     el.addEventListener('click', () => startChapter(ch));
   }
+  if (ch.coverImg && window.innerWidth > 768) {
+    el.addEventListener('mouseenter', () => {
+      mainCoverHover.src = ch.coverImg;
+      mainCoverHover.style.opacity = '1';
+    });
+  }
   chapterList.appendChild(el);
+});
+
+chapterList.addEventListener('mouseleave', () => {
+  mainCoverHover.style.opacity = '0';
 });
 
 function startChapter(ch) {
   pages.length = 0;
   currentSection = null;
   let sec = null;
+  if (window.innerWidth <= 768 && ch.coverImg) {
+    pages.push({ type: 'chapter_splash', src: ch.coverImg, num: ch.num, title: ch.title, _section: null });
+  }
   for (const p of ch.data.pages) {
     if (p.type === 'chapter_open') continue;
     if (p.type === 'section') { sec = p.number; continue; }

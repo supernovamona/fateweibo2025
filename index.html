@@ -92,31 +92,12 @@ html, body {
 /* ── MAIN SCREEN (title + chapter select combined) ── */
 #screen-main {
   position: absolute; inset: 0;
-  display: flex;
   background: var(--bg);
   z-index: 10;
 }
-.main-left {
-  width: 760px;
-  flex-shrink: 0;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-  border-right: 1px solid rgba(255,255,255,0.04);
-}
-.main-brand {
+.main-cover-wrap {
   position: absolute;
-  bottom: 28px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  z-index: 3;
-  font-family: var(--font-ui);
-  font-size: 11px;
-  letter-spacing: 0.4em;
-  color: rgba(255,255,255,0.55);
-  text-transform: uppercase;
-  text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+  inset: 0;
 }
 .main-header-img {
   position: absolute;
@@ -124,7 +105,7 @@ html, body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: top center;
+  object-position: center;
   opacity: 0;
   animation: fadeIn 1.2s ease 0.3s forwards;
 }
@@ -134,18 +115,45 @@ html, body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: top center;
+  object-position: center;
   opacity: 0;
   transition: opacity 0.45s ease;
   z-index: 1;
 }
+.main-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(100deg,
+    rgba(8,8,15,0)    0%,
+    rgba(8,8,15,0.05) 28%,
+    rgba(8,8,15,0.72) 50%,
+    rgba(8,8,15,0.96) 66%,
+    rgba(8,8,15,0.99) 100%
+  );
+}
+.main-brand {
+  position: absolute;
+  bottom: 40px;
+  left: 48px;
+  z-index: 4;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+}
 .main-right {
-  flex: 1;
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 720px;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 60px 80px;
   gap: 28px;
+  overflow-y: auto;
 }
 .main-right-label {
   font-family: var(--font-ui);
@@ -174,9 +182,8 @@ html, body {
   background: rgba(200,168,130,0.05);
 }
 .chapter-item.locked {
-  opacity: 0.25;
+  opacity: 0.3;
   cursor: default;
-  pointer-events: none;
 }
 .chapter-item .ch-num {
   font-family: var(--font-ui);
@@ -640,13 +647,13 @@ ruby rt {
   }
 
   /* main screen: stack vertically */
-  #screen-main { flex-direction: column; }
-  .main-left {
-    width: 100%;
+  #screen-main { display: flex; flex-direction: column; }
+  .main-cover-wrap {
+    position: relative;
+    flex-shrink: 0;
     height: 42vh;
     min-height: 180px;
-    border-right: none;
-    flex-shrink: 0;
+    overflow: hidden;
   }
   .main-header-img {
     animation: none !important;
@@ -654,16 +661,22 @@ ruby rt {
     object-position: center center;
   }
   .main-header-hover { display: none; }
-  .main-brand {
-    font-size: 10px;
-    bottom: 10px;
+  .main-overlay {
+    background: linear-gradient(to bottom,
+      rgba(8,8,15,0) 50%, rgba(8,8,15,0.85) 100%
+    );
   }
+  .main-brand { bottom: 10px; left: 14px; font-size: 10px; }
   .main-right {
+    position: relative;
+    right: auto; top: auto; bottom: auto;
+    width: 100%;
     flex: 1;
     padding: 16px 20px;
     gap: 12px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    justify-content: flex-start;
   }
   .chapter-list {
     grid-template-columns: 1fr;
@@ -741,10 +754,11 @@ ruby rt {
 
 <!-- MAIN SCREEN (title + chapter select) -->
 <div id="screen-main">
-  <div class="main-left">
+  <div class="main-cover-wrap">
     <img class="main-header-img" src="chapter0/header.jpg" alt=""
          onerror="this.style.display='none'">
     <img class="main-header-hover" id="main-cover-hover" src="" alt="">
+    <div class="main-overlay"></div>
     <div class="main-brand">fateweibo2025</div>
   </div>
   <div class="main-right">
@@ -761,6 +775,7 @@ ruby rt {
       <span id="section-indicator"></span>
     </div>
     <div id="topbar-right">
+      <div class="topbar-btn" id="btn-home">目录</div>
       <div class="topbar-btn" id="btn-auto">Auto</div>
     </div>
   </div>
@@ -1296,6 +1311,7 @@ const pageCounter = document.getElementById('page-counter');
 const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
 const btnAuto = document.getElementById('btn-auto');
+const btnHome = document.getElementById('btn-home');
 const cgImg = document.getElementById('cg-img');
 
 // ── RENDER ──
@@ -1618,6 +1634,14 @@ pageJumpInput.addEventListener('blur', () => closeJump());
 btnPrev.addEventListener('click', (e) => { e.stopPropagation(); goPrev(); });
 btnNext.addEventListener('click', (e) => { e.stopPropagation(); goNext(); });
 btnAuto.addEventListener('click', (e) => { e.stopPropagation(); toggleAuto(); });
+btnHome.addEventListener('click', (e) => {
+  e.stopPropagation();
+  clearTimeout(autoTimer);
+  autoPlay = false; autoSpeedIdx = 0;
+  btnAuto.textContent = 'Auto'; btnAuto.classList.remove('active');
+  screenReader.style.display = 'none';
+  screenMain.style.display = '';
+});
 
 // ── FIT TO WINDOW (desktop only) ──
 (function () {

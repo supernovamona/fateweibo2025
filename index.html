@@ -710,39 +710,26 @@ ruby rt {
   .sns-body, .sns-comment-text { font-size: 12px; }
 }
 
-/* ── CG PERSISTENT BACKGROUND ── */
+/* ── CG PERSISTENT BACKGROUND + SCRIM ── */
 #cg-persist-bg {
   position: absolute;
   inset: 0;
-  background-size: cover;
+  background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
   opacity: 0;
-  transition: opacity 0.6s ease;
+  transition: opacity 0.55s ease;
   z-index: 0;
   pointer-events: none;
 }
-
-/* ── CG BACKGROUND PAGES ── */
-.page-with-bg {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.page-bg-scrim {
+#cg-persist-scrim {
   position: absolute;
   inset: 0;
-  background: rgba(8,8,15,0.78);
-}
-.page-bg-content {
-  position: relative;
-  z-index: 2;
-  max-width: 620px;
-  width: 100%;
-  padding: 40px 0;
+  background: rgba(8,8,15,0.80);
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  z-index: 1;
+  pointer-events: none;
 }
 
 /* ── CHAPTER SPLASH (mobile first page) ── */
@@ -805,6 +792,7 @@ ruby rt {
 <!-- READER SCREEN -->
 <div id="screen-reader">
   <div id="cg-persist-bg"></div>
+  <div id="cg-persist-scrim"></div>
   <div id="topbar">
     <div id="topbar-left">
       <span id="topbar-chapter">序章 · 逢坂莫奈将会拥有平静幸福的人生</span>
@@ -1399,14 +1387,7 @@ function renderPage(page) {
   } else if (t === 'data_lost') {
     inner = `<div class="page-data-lost">DATA LOST</div>`;
   } else if (t === 'cg') {
-    return `<div class="page-cg-inline"><img class="cg-inline-img" src="${page.src}" alt=""></div>`;
-  }
-
-  if (page._cgBg && inner) {
-    return `<div class="page-with-bg">
-      <div class="page-bg-scrim"></div>
-      <div class="page-bg-content">${inner}</div>
-    </div>`;
+    return ''; // image shown by #cg-persist-bg
   }
 
   if (t === 'chapter_splash') {
@@ -1472,16 +1453,22 @@ function updateSectionIndicator(sec) {
 }
 
 const cgPersistBg = document.getElementById('cg-persist-bg');
+const cgPersistScrim = document.getElementById('cg-persist-scrim');
 
 function doShowPage(idx) {
   currentPage = idx;
   const page = pages[idx];
 
-  if (page._cgBg) {
-    cgPersistBg.style.backgroundImage = `url('${page._cgBg}')`;
+  if (page.type === 'cg') {
+    cgPersistBg.style.backgroundImage = `url('${page.src}')`;
     cgPersistBg.style.opacity = '1';
+    cgPersistScrim.style.opacity = '0';
+  } else if (page._cgBg) {
+    cgPersistBg.style.opacity = '1';
+    cgPersistScrim.style.opacity = '1';
   } else {
     cgPersistBg.style.opacity = '0';
+    cgPersistScrim.style.opacity = '0';
   }
 
   pageContainer.classList.toggle('showing-cg', page.type === 'cg' || page.type === 'chapter_splash' || !!page._cgBg);

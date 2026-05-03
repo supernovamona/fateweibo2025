@@ -710,6 +710,19 @@ ruby rt {
   .sns-body, .sns-comment-text { font-size: 12px; }
 }
 
+/* ── CG PERSISTENT BACKGROUND ── */
+#cg-persist-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+
 /* ── CG BACKGROUND PAGES ── */
 .page-with-bg {
   position: relative;
@@ -718,15 +731,11 @@ ruby rt {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
 }
 .page-bg-scrim {
   position: absolute;
   inset: 0;
-  background: rgba(8,8,15,0.62);
+  background: rgba(8,8,15,0.78);
 }
 .page-bg-content {
   position: relative;
@@ -795,6 +804,7 @@ ruby rt {
 
 <!-- READER SCREEN -->
 <div id="screen-reader">
+  <div id="cg-persist-bg"></div>
   <div id="topbar">
     <div id="topbar-left">
       <span id="topbar-chapter">序章 · 逢坂莫奈将会拥有平静幸福的人生</span>
@@ -1393,7 +1403,7 @@ function renderPage(page) {
   }
 
   if (page._cgBg && inner) {
-    return `<div class="page-with-bg" style="background-image:url('${page._cgBg}')">
+    return `<div class="page-with-bg">
       <div class="page-bg-scrim"></div>
       <div class="page-bg-content">${inner}</div>
     </div>`;
@@ -1461,9 +1471,18 @@ function updateSectionIndicator(sec) {
   }
 }
 
+const cgPersistBg = document.getElementById('cg-persist-bg');
+
 function doShowPage(idx) {
   currentPage = idx;
   const page = pages[idx];
+
+  if (page._cgBg) {
+    cgPersistBg.style.backgroundImage = `url('${page._cgBg}')`;
+    cgPersistBg.style.opacity = '1';
+  } else {
+    cgPersistBg.style.opacity = '0';
+  }
 
   pageContainer.classList.toggle('showing-cg', page.type === 'cg' || page.type === 'chapter_splash' || !!page._cgBg);
   pageContainer.innerHTML = renderPage(page);

@@ -710,6 +710,37 @@ ruby rt {
   .sns-body, .sns-comment-text { font-size: 12px; }
 }
 
+/* ── CG BACKGROUND PAGES ── */
+.page-with-bg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.page-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.page-bg-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(8,8,15,0.72);
+}
+.page-bg-content {
+  position: relative;
+  z-index: 2;
+  max-width: 620px;
+  width: 100%;
+  padding: 40px 0;
+}
+
 /* ── CHAPTER SPLASH (mobile first page) ── */
 .page-chapter-splash {
   position: relative;
@@ -1084,7 +1115,8 @@ const CHAPTER0 = {
     },
     {
       "type": "cg",
-      "src": "chapter0/0_1.jpg"
+      "src": "chapter0/0_1.jpg",
+      "followPages": 2
     },
     {
       "type": "text",
@@ -1317,51 +1349,38 @@ const cgImg = document.getElementById('cg-img');
 // ── RENDER ──
 function renderPage(page) {
   const t = page.type;
+  let inner = '';
 
   if (t === 'chapter_open') {
-    return `<div style="height:60px"></div>`;
-  }
-
-  if (t === 'chapter_end') {
-    return `<div class="page-chapter-end">${page.text}</div>`;
-  }
-
-  if (t === 'section') {
-    return ''; // section pages are filtered out; number shown in topbar
-  }
-
-  if (t === 'epigraph') {
-    return `<div class="page-epigraph">${page.lines.map(l => `<p>${l}</p>`).join('')}</div>`;
-  }
-
-  if (t === 'text') {
+    inner = `<div style="height:60px"></div>`;
+  } else if (t === 'chapter_end') {
+    inner = `<div class="page-chapter-end">${page.text}</div>`;
+  } else if (t === 'section') {
+    inner = '';
+  } else if (t === 'epigraph') {
+    inner = `<div class="page-epigraph">${page.lines.map(l => `<p>${l}</p>`).join('')}</div>`;
+  } else if (t === 'text') {
     const cls = page.memory ? 'page-text memory' : 'page-text';
     const ps = page.paragraphs.map(p => {
       const noIndent = p.startsWith('「') || p.startsWith('……') || p === '……' || p === '停下。' || p === '下滑。';
       return `<p${noIndent ? ' class="no-indent"' : ''}>${p}</p>`;
     }).join('');
-    return `<div class="${cls}">${ps}</div>`;
-  }
-
-  if (t === 'text_with_annotation') {
+    inner = `<div class="${cls}">${ps}</div>`;
+  } else if (t === 'text_with_annotation') {
     let html = page.text;
     for (const ann of page.annotations) {
       html = html.replace(ann.word, `<ruby>${ann.word}<rt>${ann.ruby}</rt></ruby>`);
     }
     const noIndent = page.text.startsWith('「');
-    return `<div class="page-text page-text-annot"><p${noIndent ? ' class="no-indent"' : ''}>${html}</p></div>`;
-  }
-
-  if (t === 'sns_post') {
-    return `<div class="page-sns-post">
+    inner = `<div class="page-text page-text-annot"><p${noIndent ? ' class="no-indent"' : ''}>${html}</p></div>`;
+  } else if (t === 'sns_post') {
+    inner = `<div class="page-sns-post">
       <div class="sns-platform">${page.platform}</div>
       <div class="sns-author">${page.author}</div>
       <div class="sns-title">${page.title}</div>
       <div class="sns-body">${page.body}</div>
     </div>`;
-  }
-
-  if (t === 'sns_comments') {
+  } else if (t === 'sns_comments') {
     const items = page.comments.map(c => `
       <div class="sns-comment">
         <div class="sns-comment-header">
@@ -1371,15 +1390,19 @@ function renderPage(page) {
         <div class="sns-comment-text">${c.text}</div>
         <div class="sns-comment-likes">▲ ${c.likes}</div>
       </div>`).join('');
-    return `<div class="page-sns-comments">${items}</div>`;
-  }
-
-  if (t === 'data_lost') {
-    return `<div class="page-data-lost">DATA LOST</div>`;
-  }
-
-  if (t === 'cg') {
+    inner = `<div class="page-sns-comments">${items}</div>`;
+  } else if (t === 'data_lost') {
+    inner = `<div class="page-data-lost">DATA LOST</div>`;
+  } else if (t === 'cg') {
     return `<div class="page-cg-inline"><img class="cg-inline-img" src="${page.src}" alt=""></div>`;
+  }
+
+  if (page._cgBg && inner) {
+    return `<div class="page-with-bg">
+      <img class="page-bg-img" src="${page._cgBg}" alt="">
+      <div class="page-bg-scrim"></div>
+      <div class="page-bg-content">${inner}</div>
+    </div>`;
   }
 
   if (t === 'chapter_splash') {
@@ -1392,7 +1415,7 @@ function renderPage(page) {
     </div>`;
   }
 
-  return '';
+  return inner;
 }
 
 function showPage(idx, instant) {
@@ -1448,7 +1471,7 @@ function doShowPage(idx) {
   currentPage = idx;
   const page = pages[idx];
 
-  pageContainer.classList.toggle('showing-cg', page.type === 'cg' || page.type === 'chapter_splash');
+  pageContainer.classList.toggle('showing-cg', page.type === 'cg' || page.type === 'chapter_splash' || !!page._cgBg);
   pageContainer.innerHTML = renderPage(page);
   pageContainer.scrollTop = 0;
 
@@ -1576,10 +1599,19 @@ function startChapter(ch) {
   if (window.innerWidth <= 768 && ch.coverImg) {
     pages.push({ type: 'chapter_splash', src: ch.coverImg, num: ch.num, title: ch.title, _section: null });
   }
+  let cgBg = null, cgBgLeft = 0;
   for (const p of ch.data.pages) {
     if (p.type === 'chapter_open') continue;
-    if (p.type === 'section') { sec = p.number; continue; }
-    pages.push(Object.assign({}, p, { _section: sec }));
+    if (p.type === 'section') { sec = p.number; cgBg = null; cgBgLeft = 0; continue; }
+    if (p.type === 'cg') {
+      cgBg = p.src;
+      cgBgLeft = p.followPages || 0;
+      pages.push(Object.assign({}, p, { _section: sec }));
+      continue;
+    }
+    const entry = Object.assign({}, p, { _section: sec });
+    if (cgBgLeft > 0) { entry._cgBg = cgBg; cgBgLeft--; }
+    pages.push(entry);
   }
   total = pages.length;
 

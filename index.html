@@ -719,19 +719,14 @@ ruby rt {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-}
-.page-bg-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .page-bg-scrim {
   position: absolute;
   inset: 0;
-  background: rgba(8,8,15,0.72);
+  background: rgba(8,8,15,0.62);
 }
 .page-bg-content {
   position: relative;
@@ -1398,8 +1393,7 @@ function renderPage(page) {
   }
 
   if (page._cgBg && inner) {
-    return `<div class="page-with-bg">
-      <img class="page-bg-img" src="${page._cgBg}" alt="">
+    return `<div class="page-with-bg" style="background-image:url('${page._cgBg}')">
       <div class="page-bg-scrim"></div>
       <div class="page-bg-content">${inner}</div>
     </div>`;
